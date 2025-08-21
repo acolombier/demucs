@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'mixxxdj/demucs' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.repository == 'acolombier/demucs' || github.event_name == 'workflow_dispatch' }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
