@@ -1,9 +1,10 @@
-name: tests
+name: release
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: write # Fetch code (actions/checkout), create release
@@ -12,21 +13,25 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: ${{ github.repository == 'acolombier/demucs' || github.event_name == 'workflow_dispatch' }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - uses: actions/setup-python@v5
       with:
         python-version: 3.13
+
+    - run: |
+        set -eo pipefail
+        echo "VERSION=$(git describe --tags --match "v*" --exclude "*-onnxmodel")-onnxmodel" >> "${GITHUB_ENV}"
+      name: "Prepare"
 
     - run: |
         pip install .
         pip install onnx onnxruntime
         ./scripts/convert-pth-to-onnx.py ./output
       name: Build
-
-    - run: |
-        echo "VERSION=$(git describe --tags)" >> "${GITHUB_ENV}"
-      name: "Prepare"
 
     - run: |
         if ! gh release view --repo "${{ github.repository }}" "${RELEASE_NAME}" &> /dev/null
@@ -41,7 +46,7 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RELEASE_NAME: ${{ env.VERSION }}
       shell: bash
-      if: ${{ github.event_name == 'push' }}
+      # if: ${{ github.event_name == 'push' }}
       id: ghrelease
       name: "Creates a release in GitHub if it doesn't exist yet"
 
